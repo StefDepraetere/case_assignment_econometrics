@@ -245,8 +245,89 @@ pchisq(LRtest, 7, lower.tail = FALSE) # p-value
 #LRtest 25.52; CHIsquared 14.06 #not above critical value
 
 #inspect residuals
-###
+resARMA74 <- ARMA74$residuals
 
+QstatresARMA74 = LjungBox(resARMA74,50,11)
+stargazer(QstatresARMA74,type = "text", summary = FALSE)
+
+#graph residuals
+res.ts <- ts(resARMA74, start = c(1974, 1), end = c(2015, 12), frequency = 12)
+#US_IP_diff
+IRFARMA74 = IRFarma(ARMA74, 504)
+
+
+#acf & pacf for model residuals
+resARMA74_ACF = acf(resARMA74)
+resARMA74_PACF = pacf(resARMA74)
+par(mar=c(2,2,0,0), mfrow = c(1,2)) 
+plot(resARMA74_ACF,main="residuals",ylab="ACF",xlab="Lag",lwd=7.5,mar=c(2,2,0,0),col="darkblue",bty='l',col.axis="black")
+plot(resARMA74_PACF,main="residuals",ylab="PACF",xlab="Lag",lwd=7.5,mar=c(2,2,0,0),col="darkblue",bty='l',col.axis="black")
+
+#plot data + fitted and residuals arma(7,4)
+# Plot data + fitted and residuals from MA(4) model
+pdf("model_ARMA74_resid.pdf", onefile = T, paper = 'A4r',width = 0,height = 0)
+fitVal = US_IP_diff - resARMA74
+par(mar=c(5,5,2,5), mfrow = c(1,1))
+plot(US_IP_diff, type = "l",col="red3", lwd = 2, xlab = NA, ylab = NA,ylim = c(-6,3),
+     las = 1, bty = "u")
+lines(fitVal, col = "green3", lwd = 2)
+par(new = T)
+plot(resARMA74, type = "l", axes = F, xlab = NA, ylab = NA, col = "blue3", lwd = 2, lty = 3)
+axis(side = 4)
+par(new = T, xpd = NA, mar = c(par()$mar + c(-5,+3,0,0)))
+plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n",xlab=NA,ylab=NA)
+legend("bottom", legend = c("Actual","Fitted","Residuals (right axis)"), lty = c(1,1,3), lwd = c(2,2,2)
+       ,col = c("red3","green3","blue3"), horiz = TRUE,cex=0.9,bty="n")
+dev.off()
+
+# CUSUM stability test on ARMA74
+res_ARMA74 <- residuals(ARMA74)-mean(residuals(ARMA74))
+sigma_ARMA74 <- sqrt(ARMA74$sigma2)
+cs_ARMA74 <- cumsum(res_ARMA74) / (sqrt(length(US_IP_diff))*sigma_ARMA74)
+cs_ARMA74.ts = ts(cs_ARMA74,start = c(1974, 1), end = c(2015, 12), frequency = 12)
+
+pdf("CUSUM_ARMA74.pdf", onefile = T, paper = 'A4r',width = 0,height = 0)
+par(mar=c(2,2,0,2))
+plot(cs_ARMA74.ts, ylab = NULL, xlab = NULL,lwd = 3, col="darkblue", bty = 'l', col.axis = "black", type = "l",
+     ylim = c(min(cs_ARMA74, -1.5), max(cs_ARMA74,1.5)))
+abline(h = c(-1.36,1.36), col = "darkgrey", lty = 2,lwd = 2)
+abline(h = c(0), col = "black", lwd = 2)
+dev.off()
+
+#forecasting
+if(!require(forecast)){install.packages("forecast")}
+library(forecast)
+
+noholdout1 <- window(US_IP_diff,start=c(1974,1),end=c(2015,12))
+holdout1 <- window(US_IP_diff, start=c(2016, 1), end=c(2016, 12))
+noholdout2 <- window(US_IP_diff, start=c(1974,1), end=c(2016,12))
+holdout2 <- window(US_IP_diff, start=c(2017, 1), end=c(2017, 12))
+
+# Estimate ARMA(7,4) over period 1974:1-2015:12 and forecast over holdout period 2016:1-2016:12 
+ARMA74_noholdout1 = arima(noholdout1, order=c(7,0,4), method = "CSS-ML", include.mean = TRUE)
+Fcast_ARMA74a <- forecast(ARMA74_noholdout1,h=12)                                #the argument h represents the length of the forecast
+accuracy(Fcast_ARMA74a,holdout1) # Check forecast accuracy
+
+# Plot forecast + 80 and 95 % prediction interval
+pdf("Fcast_ARMA74a_CI.pdf", onefile = T, paper = 'A4r',width = 0,height = 0)
+par(mar=c(2,2,0,2))
+plot(Fcast_ARMA74a, main=" ")
+lines(US_IP_diff)
+abline(h=c(ARMA74_noholdout1$coef[5]),col="black",lty=2)       #Draws a horizontal line at the coordinates of the intercept of this model (the fifth coefficient of an MA(4) model
+dev.off()   
+
+# Estimate ARMA(7,4) over period 1974:1-2016:12 and forecast over holdout period 2017:1-2017:12 
+ARMA74_noholdout2 = arima(noholdout2, order=c(7,0,4), method = "CSS-ML", include.mean = TRUE)
+Fcast_ARMA74b <- forecast(ARMA74_noholdout2,h=12)                                #the argument h represents the length of the forecast
+accuracy(Fcast_ARMA74b,holdout2) # Check forecast accuracy
+
+# Plot forecast + 80 and 95 % prediction interval
+pdf("Fcast_ARMA74b_CI.pdf", onefile = T, paper = 'A4r',width = 0,height = 0)
+par(mar=c(2,2,0,2))
+plot(Fcast_ARMA74b, main=" ")
+lines(US_IP_diff)
+abline(h=c(ARMA74_noholdout2$coef[5]),col="black",lty=2)       #Draws a horizontal line at the coordinates of the intercept of this model (the fifth coefficient of an MA(4) model
+dev.off()  
 
 
 
