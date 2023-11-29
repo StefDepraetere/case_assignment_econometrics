@@ -25,11 +25,11 @@ library(nlme)        ## Linear models with autocorrelated error terms
 library(openxlsx)    ## To read an excel xlsx data file
 library(fastDummies) ## Create dummies based on different categories in a variable
 library(datawizard)  ## Data transformations (e.g. demeaning by group)
-library(EconometricsUGent)  ## Additional functions
+#library(EconometricsUGent)  ## Additional functions
 library(ggplot2)
 source("TimeSeriesFunctions_v3.R")
 
-output="C:\\Users\\Tim\\Documents\\school\\econometrics_time\\first_assignment"
+output="C:\\Users\\Tim\\Documents\\school\\econometrics_time\\first_assignment\\case_assignment_econometrics"
 #read and collect right data
 data <- read.csv(("school/econometrics_time/first_assignment/data.csv"), header=TRUE, sep = ",")
 
