@@ -11,6 +11,8 @@ if(!require(AER)){install.packages("AER")}
 if(!require(stargazer)){install.packages("stargazer")}
 if(!require(nlme)){install.packages("nlme")}
 if(!require(orcutt)){install.packages("orcutt")}
+if(!require(orcutt)){install.packages("tinytex")}
+if(!require(orcutt)){install.packages("urca")}
 
 
 library(pastecs)     ## Descriptive Statistics
@@ -27,11 +29,13 @@ library(fastDummies) ## Create dummies based on different categories in a variab
 library(datawizard)  ## Data transformations (e.g. demeaning by group)
 #library(EconometricsUGent)  ## Additional functions
 library(ggplot2)
-source("TimeSeriesFunctions_v3.R")
+library(tinytex)
+library(urca)
+source(".\\scripts\\TimeSeriesFunctions_v3.R")
 
-output="C:\\Users\\Tim\\Documents\\school\\econometrics_time\\first_assignment\\case_assignment_econometrics"
+output=".\\visuals"
 #read and collect right data
-data <- read.csv(("school/econometrics_time/first_assignment/data.csv"), header=TRUE, sep = ",")
+data <- read.csv((".\\data.csv"), header=TRUE, sep = ",")
 
 data.ts <- ts(data, start = c(1974, 1), end = c(2017, 12), frequency = 12)
 US_IP <- data.ts[,"US_IP"]
@@ -40,14 +44,18 @@ US_IP_diff <- diff(US_IP, differences = 1)
 
 ##QUESTION 1
 #plot US_IP
-par(mar = c(2,2,0,2))                                                                             # Adjust margins
-plot(US_IP, ylab = NULL, xlab = NULL, lwd = 2, col = "darkblue", bty = "l", col.axis = "black")
+pdf(file=".\\visuals\\question_1.pdf")
+#par(mar = c(2,2,0,2))                                                                             # Adjust margins
+plot(US_IP, main = "Time series lnYt", ylab = "US_IP_log", xlab = "Time", lwd = 2, col = "darkblue", bty = "l", col.axis = "black")
 abline(h = c(100,200,300,400), col = "darkgrey", lty = 2)
+#dev.off()
 
 #plot US_IP_diff
-par(mar = c(2,2,0,2))                                                                             # Adjust margins
-plot(US_IP_diff, ylab = NULL, xlab = NULL, lwd = 2, col = "darkblue", bty = "l", col.axis = "black")
+#pdf(file=".\\visuals\\US_IP_log_diff.pdf")
+#par(mar = c(2,2,0,2))                                                                             # Adjust margins
+plot(US_IP_diff, main="Time series diff lnYt",ylab = "Diff lnYt", xlab = "Time", lwd = 2, col = "darkblue", bty = "l", col.axis = "black")
 abline(h = c(100,200,300,400), col = "darkgrey", lty = 2)
+dev.off()
 
 #reduced number of observations
 reduced.ts <- ts(data, start = c(1974, 1), end = c(2015, 12), frequency = 12)
@@ -60,19 +68,24 @@ US_IP_diff <- diff(US_IP, differences = 1)
 
 #question 2
 #acf_levels
+pdf(file=".\\visuals\\question_2.pdf")
 US_IP_diff_acf <- acf(US_IP_diff)
-par(mar = c(2,2,0,0)) 
-plot(US_IP_diff_acf,main = "", ylab = NULL, xlab = "Lag", lwd = 7.5, mar = c(2,2,0,0), col = "darkblue", bty = 'l', col.axis = "black")
+#par(mar = c(2,2,0,0)) 
+plot(US_IP_diff_acf,main = "ACF US IP diff", ylab = "Autocorrelation", xlab = "Lag", lwd = 7.5, mar = c(2,2,0,0), col = "darkblue", bty = 'l', col.axis = "black")
+#dev.off()
 
 #pacf_levels
+#pdf(file=".\\visuals\\pacf_US_IP_diff.pdf")
 US_IP_diff_pacf <- pacf(US_IP_diff)
-par(mar = c(2,2,0,0)) 
-plot(US_IP_diff_pacf,main = "", ylab = NULL, xlab = "Lag", lwd = 7.5, mar = c(2,2,0,0), col = "darkblue", bty = 'l', col.axis = "black")
+#par(mar = c(2,2,0,0)) 
+plot(US_IP_diff_pacf,main = "PACF US IP diff", ylab = "Partial autocorrelation", xlab = "Lag", lwd = 7.5, mar = c(2,2,0,0), col = "darkblue", bty = 'l', col.axis = "black")
+
 
 #same graph
-par(mar = c(2,2,0,0), mfrow = c(1,2)) 
-plot(US_IP_diff_acf,main = "", ylab = NULL, xlab = "Lag", lwd = 7.5, mar = c(2,2,0,0), col = "darkblue", bty = 'l', col.axis = "black")
-plot(US_IP_diff_pacf, main = "", ylab = NULL, xlab = "Lag", lwd = 7.5, mar = c(2,2,0,0), col = "darkblue", bty = 'l', col.axis = "black")
+par(mfrow = c(1,2)) 
+plot(US_IP_diff_acf,main = "", ylab = NULL, xlab = "Lag", lwd = 5, mar = c(2,2,0,0), col = "darkblue", bty = 'l', col.axis = "black")
+plot(US_IP_diff_pacf, main = "", ylab = NULL, xlab = "Lag", lwd = 5, mar = c(2,2,0,0), col = "darkblue", bty = 'l', col.axis = "black")
+dev.off()
 
 #ljung-box statistics
 QstatDiff = LjungBox(US_IP_diff,10,0)
@@ -80,6 +93,7 @@ stargazer(QstatDiff,type = "text", summary = FALSE)
 
 #question 3 
 AIC_US_IP_diff<- aic_table_css(US_IP_diff,7,7)
+AIC_US_IP_diff
 
 # ARMA(6,3); AIC 2638,86
 # ARMA(3,6); AIC 2643,42
@@ -89,6 +103,7 @@ AIC_US_IP_diff<- aic_table_css(US_IP_diff,7,7)
 # ARMA(5,6); AIC 2641,41
 
 BIC_US_IP_diff<- bic_table_css(US_IP_diff,7,7)
+BIC_US_IP_diff
 
 # ARMA(1,1); BIC 2680,29
 # ARMA(2,2); BIC 2673,42
@@ -107,7 +122,12 @@ stargazer(ARMA63,type = "text", omit.table.layout = "n", intercept.bottom = FALS
           df = T, report="vcs*t",  
           dep.var.labels = "D(US_IP)",
           add.lines = list(c("AIC",ARMA63AIC),c("BIC",ARMA63BIC),c("RSS",ARMA63RSS)), 
-          omit.stat = c("aic","sigma2"))
+          omit.stat = c("aic","sigma2"),
+          output=".\\visuals\\arma63.txt")
+                             
+
+writeLines(try, ".\\visuals\\arma63.txt")
+
 
 #using the css_ml method aic = 1017,2339 and bic = 1063,66 and rss 211,8416
 
@@ -170,15 +190,15 @@ IRFARMA74    = IRFarma(ARMA74, 30)
 IRFARMA11    = IRFarma(ARMA11, 30)
 IRFARMA22    = IRFarma(ARMA22, 30)
 
-pdf("impulse_response_function_2.pdf", onefile = T, paper = 'A4r',width = 0,height = 0)
-plot(IRFARMA63, ylab = "Impulse Response", xlab = "T",lwd = 3, col="darkblue", bty = 'l', col.axis = "black", type = "l", 
+pdf(".\\visuals\\impulse_response_function_2.pdf", onefile = T, paper = 'A4r',width = 0,height = 0)
+plot(IRFARMA63, ylab = "Impulse Response", xlab = "T",lwd = 0.5, col="darkblue", bty = 'l', col.axis = "black", type = "l", 
      ylim = c(min(IRFARMA63, IRFARMA36,IRFARMA74, IRFARMA11, IRFARMA22),
               max(IRFARMA63, IRFARMA36,IRFARMA74, IRFARMA11, IRFARMA22)),
      panel.first = abline(h = c(0.6,0.8,1,1.2,1.4,1.6), col = "darkgrey", lty = 2))
-lines(IRFARMA36, col = "springgreen3", lwd = 3)
-lines(IRFARMA74, col = "red", lwd = 3)
-lines(IRFARMA11, col = "yellow", lwd = 3)
-lines(IRFARMA22, col = "purple", lwd = 3)
+lines(IRFARMA36, col = "springgreen3", lwd = 0.5)
+lines(IRFARMA74, col = "red", lwd = 0.5)
+lines(IRFARMA11, col = "yellow", lwd = 0.5)
+lines(IRFARMA22, col = "purple", lwd = 0.5)
 legend("topright",legend = c("ARMA(6,3)","ARMA(3,6)","ARMA(7,4)", "ARMA(1,1)", "ARMA(2,2)"), lty = c(1,1), lwd = c(3,3)
        ,col = c("darkblue","springgreen3","red", "yellow", "purple"), horiz = TRUE, cex = 1.25, bty = "n")
 dev.off()
@@ -192,57 +212,75 @@ dev.off()
 
 Fstat = ( (ARMA63RSS - ARMA74RSS)/2 ) / ( ARMA74RSS/(ARMA74$nobs-12))
 Fstat
-qf(0.95, 2, ARMA74$nobs-12) # 5% critical value
-pf(Fstat, 2, ARMA74$nobs-12, lower.tail = FALSE) # p-value
+qf(0.95, 2, ARMA74$nobs-12)
+pf(Fstat, 2, ARMA74$nobs-12, lower.tail = FALSE)
 #Fstat 8,7, critical value 3,01
 
+ARMA74$loglik
+ARMA63$loglik
 LRtest = 2*(ARMA74$loglik-ARMA63$loglik)
 LRtest
-qchisq(0.95, 2) # 5% critical value
-pchisq(LRtest, 2, lower.tail = FALSE) # p-value
+qchisq(0.95, 2)
+pchisq(LRtest, 2, lower.tail = FALSE)
 #LRtest 15,24; CHIsquared 5.99
 
 # Compare ARMA(2,2) to ARMA(6,3) 
 
 Fstat = ( (ARMA22RSS - ARMA63RSS)/5 ) / ( ARMA63RSS/(ARMA63$nobs-9))
 Fstat
-qf(0.95, 5, ARMA63$nobs-9) # 5% critical value
-pf(Fstat, 5, ARMA63$nobs-9, lower.tail = FALSE) # p-value
+qf(0.95, 5, ARMA63$nobs-9)
+pf(Fstat, 5, ARMA63$nobs-9, lower.tail = FALSE)
 #Fstat 2.53, critical value 2.23
 
 LRtest = 2*(ARMA63$loglik-ARMA22$loglik)
 LRtest
-qchisq(0.95, 5) # 5% critical value
-pchisq(LRtest, 5, lower.tail = FALSE) # p-value
-#LRtest 10,28; CHIsquared 11,07 #not above critical value
+qchisq(0.95, 5)
+pchisq(LRtest, 5, lower.tail = FALSE)
+#LRtest 10,28; CHIsquared 11,07
 
 # Compare ARMA(1,1) to ARMA(2,2) 
 
 Fstat = ( (ARMA11RSS - ARMA22RSS)/2 ) / ( ARMA22RSS/(ARMA22$nobs-4))
 Fstat
-qf(0.95, 2, ARMA22$nobs-4) # 5% critical value
-pf(Fstat, 2, ARMA22$nobs-4, lower.tail = FALSE) # p-value
+qf(0.95, 2, ARMA22$nobs-4)
+pf(Fstat, 2, ARMA22$nobs-4, lower.tail = FALSE)
 #Fstat 0.399, critical value 3,01
 
 LRtest = 2*(ARMA22$loglik-ARMA11$loglik)
 LRtest
 qchisq(0.95, 2) # 5% critical value
-pchisq(LRtest, 2, lower.tail = FALSE) # p-value
-#LRtest 0.79; CHIsquared 5.99 #not above critical value
+pchisq(LRtest, 2, lower.tail = FALSE) 
+#LRtest 0.79; CHIsquared 5.99
 
 # Compare ARMA(2,2) to ARMA(7,4) 
 
 Fstat = ( (ARMA22RSS - ARMA74RSS)/7 ) / ( ARMA74RSS/(ARMA74$nobs-12))
 Fstat
-qf(0.95, 7, ARMA74$nobs-12) # 5% critical value
-pf(Fstat, 7, ARMA74$nobs-12, lower.tail = FALSE) # p-value
+qf(0.95, 7, ARMA74$nobs-12) 
+pf(Fstat, 7, ARMA74$nobs-12, lower.tail = FALSE)
 #Fstat 4,35, critical value 2.02
 
 LRtest = 2*(ARMA74$loglik-ARMA22$loglik)
 LRtest
 qchisq(0.95, 7) # 5% critical value
 pchisq(LRtest, 7, lower.tail = FALSE) # p-value
-#LRtest 25.52; CHIsquared 14.06 #not above critical value
+#LRtest 25.52; CHIsquared 14.06
+
+# Compare ARMA(1,1) to ARMA(7,4) 
+
+Fstat = ( (ARMA11RSS - ARMA74RSS)/9 ) / ( ARMA74RSS/(ARMA74$nobs-12))
+Fstat
+qf(0.95, 9, ARMA74$nobs-12) 
+pf(Fstat, 9, ARMA74$nobs-12, lower.tail = FALSE)
+#Fstat 3,48, critical value 1.90
+
+LRtest = 2*(ARMA74$loglik-ARMA11$loglik)
+LRtest
+qchisq(0.95, 9) # 5% critical value
+pchisq(LRtest, 9, lower.tail = FALSE) # p-value
+#LRtest 26,32; CHIsquared 16,91
+
+
 
 #inspect residuals
 resARMA74 <- ARMA74$residuals
@@ -259,20 +297,22 @@ IRFARMA74 = IRFarma(ARMA74, 504)
 #acf & pacf for model residuals
 resARMA74_ACF = acf(resARMA74)
 resARMA74_PACF = pacf(resARMA74)
-par(mar=c(2,2,0,0), mfrow = c(1,2)) 
-plot(resARMA74_ACF,main="residuals",ylab="ACF",xlab="Lag",lwd=7.5,mar=c(2,2,0,0),col="darkblue",bty='l',col.axis="black")
-plot(resARMA74_PACF,main="residuals",ylab="PACF",xlab="Lag",lwd=7.5,mar=c(2,2,0,0),col="darkblue",bty='l',col.axis="black")
+pdf(".\\visuals\\acf_pacf_residuals_arma74.pdf")
+par( mfrow = c(1,2)) 
+plot(resARMA74_ACF,main="Autocorrelation residuals",ylab="ACF",xlab="Lag",lwd=3,mar=c(2,2,0,0),col="darkblue",bty='l',col.axis="black")
+plot(resARMA74_PACF,main="Partial autocorrelation residuals",ylab="PACF",xlab="Lag",lwd=3,mar=c(2,2,0,0),col="darkblue",bty='l',col.axis="black")
+dev.off()
 
 #plot data + fitted and residuals arma(7,4)
 # Plot data + fitted and residuals from MA(4) model
-pdf("model_ARMA74_resid.pdf", onefile = T, paper = 'A4r',width = 0,height = 0)
+pdf(".\\visuals\\model_ARMA74_resid.pdf", onefile = T, paper = 'A4r',width = 0,height = 0)
 fitVal = US_IP_diff - resARMA74
-par(mar=c(5,5,2,5), mfrow = c(1,1))
+par(mfrow = c(1,1))
 plot(US_IP_diff, type = "l",col="red3", lwd = 2, xlab = NA, ylab = NA,ylim = c(-6,3),
      las = 1, bty = "u")
 lines(fitVal, col = "green3", lwd = 2)
 par(new = T)
-plot(resARMA74, type = "l", axes = F, xlab = NA, ylab = NA, col = "blue3", lwd = 2, lty = 3)
+plot(resARMA74, main= "ARMA(7,4)", type = "l", axes = F, xlab = NA, ylab = NA, col = "blue3", lwd = 2, lty = 3)
 axis(side = 4)
 par(new = T, xpd = NA, mar = c(par()$mar + c(-5,+3,0,0)))
 plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n",xlab=NA,ylab=NA)
@@ -286,9 +326,9 @@ sigma_ARMA74 <- sqrt(ARMA74$sigma2)
 cs_ARMA74 <- cumsum(res_ARMA74) / (sqrt(length(US_IP_diff))*sigma_ARMA74)
 cs_ARMA74.ts = ts(cs_ARMA74,start = c(1974, 1), end = c(2015, 12), frequency = 12)
 
-pdf("CUSUM_ARMA74.pdf", onefile = T, paper = 'A4r',width = 0,height = 0)
-par(mar=c(2,2,0,2))
-plot(cs_ARMA74.ts, ylab = NULL, xlab = NULL,lwd = 3, col="darkblue", bty = 'l', col.axis = "black", type = "l",
+pdf(".\\visuals\\CUSUM_ARMA74.pdf", onefile = T, paper = 'A4r',width = 0,height = 0)
+par()
+plot(cs_ARMA74.ts, main = "CUSUM ARMA(7,4)", ylab = NULL, xlab = NULL,lwd = 3, col="darkblue", bty = 'l', col.axis = "black", type = "l",
      ylim = c(min(cs_ARMA74, -1.5), max(cs_ARMA74,1.5)))
 abline(h = c(-1.36,1.36), col = "darkgrey", lty = 2,lwd = 2)
 abline(h = c(0), col = "black", lwd = 2)
@@ -298,6 +338,10 @@ dev.off()
 if(!require(forecast)){install.packages("forecast")}
 library(forecast)
 
+data.ts <- ts(data, start = c(1974, 1), end = c(2017, 12), frequency = 12)
+US_IP <- data.ts[,"US_IP"]
+US_IP_diff <- diff(US_IP, differences = 1)
+
 noholdout1 <- window(US_IP_diff,start=c(1974,1),end=c(2015,12))
 holdout1 <- window(US_IP_diff, start=c(2016, 1), end=c(2016, 12))
 noholdout2 <- window(US_IP_diff, start=c(1974,1), end=c(2016,12))
@@ -305,29 +349,73 @@ holdout2 <- window(US_IP_diff, start=c(2017, 1), end=c(2017, 12))
 
 # Estimate ARMA(7,4) over period 1974:1-2015:12 and forecast over holdout period 2016:1-2016:12 
 ARMA74_noholdout1 = arima(noholdout1, order=c(7,0,4), method = "CSS-ML", include.mean = TRUE)
-Fcast_ARMA74a <- forecast(ARMA74_noholdout1,h=12)                                #the argument h represents the length of the forecast
-accuracy(Fcast_ARMA74a,holdout1) # Check forecast accuracy
+Fcast_ARMA74a <- forecast(ARMA74_noholdout1,h=12)                                
+accuracy(Fcast_ARMA74a,holdout1) 
 
 # Plot forecast + 80 and 95 % prediction interval
-pdf("Fcast_ARMA74a_CI.pdf", onefile = T, paper = 'A4r',width = 0,height = 0)
-par(mar=c(2,2,0,2))
-plot(Fcast_ARMA74a, main=" ")
+pdf(".\\visuals\\Fcast_ARMA74a_CI.pdf", onefile = T, paper = 'A4r',width = 0,height = 0)
+par()
+plot(Fcast_ARMA74a, main="forecast ARMA(7,4) 2016", col="black")
 lines(US_IP_diff)
 abline(h=c(ARMA74_noholdout1$coef[5]),col="black",lty=2)       #Draws a horizontal line at the coordinates of the intercept of this model (the fifth coefficient of an MA(4) model
 dev.off()   
 
 # Estimate ARMA(7,4) over period 1974:1-2016:12 and forecast over holdout period 2017:1-2017:12 
 ARMA74_noholdout2 = arima(noholdout2, order=c(7,0,4), method = "CSS-ML", include.mean = TRUE)
-Fcast_ARMA74b <- forecast(ARMA74_noholdout2,h=12)                                #the argument h represents the length of the forecast
-accuracy(Fcast_ARMA74b,holdout2) # Check forecast accuracy
+Fcast_ARMA74b <- forecast(ARMA74_noholdout2,h=12) 
+accuracy(Fcast_ARMA74b,holdout2) 
 
 # Plot forecast + 80 and 95 % prediction interval
-pdf("Fcast_ARMA74b_CI.pdf", onefile = T, paper = 'A4r',width = 0,height = 0)
-par(mar=c(2,2,0,2))
-plot(Fcast_ARMA74b, main=" ")
+pdf(".\\visuals\\Fcast_ARMA74b_CI.pdf", onefile = T, paper = 'A4r',width = 0,height = 0)
+par()
+plot(Fcast_ARMA74b, main="forecast ARMA(7,4) 2017")
 lines(US_IP_diff)
 abline(h=c(ARMA74_noholdout2$coef[5]),col="black",lty=2)       #Draws a horizontal line at the coordinates of the intercept of this model (the fifth coefficient of an MA(4) model
 dev.off()  
+
+#QUESTION 7
+
+#acf of the whole series
+pdf(file=".\\visuals\\acf_diff_full.pdf")
+US_IP_diff_acf <- acf(US_IP_diff)
+#par(mar = c(2,2,0,0)) 
+plot(US_IP_diff_acf,main = "ACF US IP diff", ylab = "Autocorrelation", xlab = "Lag", lwd = 7.5, mar = c(2,2,0,0), col = "darkblue", bty = 'l', col.axis = "black")
+dev.off()
+
+estimate_p_DF <- nrow(data.ts)^(1/3)
+estimate_p_DF
+    
+AR8 <- arima(US_IP_diff, order = c(8,0,0), include.mean = TRUE)
+
+AR8_no_mean
+LjungBox(AR8$residuals, 25, 8)
+
+US_IP_diff_trend_drift <- ur.df(US_IP_diff, lags = 7, type = "trend")
+summary(US_IP_diff_trend_drift)
+
+#Question 8
+
+pdf(file=".\\visuals\\acf_lnYt_full.pdf")
+US_IP_acf <- acf(US_IP)
+#par(mar = c(2,2,0,0)) 
+plot(US_IP_acf,main = "ACF US IP", ylab = "Autocorrelation", xlab = "Lag", lwd = 7.5, mar = c(2,2,0,0), col = "darkblue", bty = 'l', col.axis = "black")
+dev.off()
+
+AR8 <- arima(US_IP, order = c(8,0,0), include.mean = T)
+LjungBox(AR8$residuals, 25, 8)
+
+US_IP_trend_drift <- ur.df(US_IP, lags = 7, type="trend")
+summary(US_IP_trend_drift)
+
+US_IP_drift <- ur.df(US_IP, lags = 7, type="drift")
+summary(US_IP_drift)
+
+US_IP_none <- ur.df(US_IP, lags = 7, type = "none")
+summary(US_IP_none)
+
+AR5_GDP_diff = arima(US_IP_diff, order = c(8,0,0), include.mean = TRUE)
+stargazer(AR5_GDP_diff,type = "text", omit.table.layout = "n", intercept.bottom = FALSE, digits = 4, digits.extra = 0, 
+          df = T, report="vcs*t", dep.var.labels = "D(GDP)", omit.stat = c("aic") )
 
 
 
